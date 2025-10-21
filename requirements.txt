@@ -2,4 +2,7 @@ fastapi==0.119.1
 pydantic==2.12.3
 pydantic-settings==2.11.0
 motor==3.7.1
-asyncio==4.0.0
+passlib==1.7.4
+uvicorn==0.38.0
+python-jose==3.5.0
+argon2-cffi==25.1.0
