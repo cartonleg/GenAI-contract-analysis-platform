@@ -1,0 +1,5 @@
+fastapi==0.119.1
+pydantic==2.12.3
+pydantic-settings==2.11.0
+motor==3.7.1
+asyncio==4.0.0
