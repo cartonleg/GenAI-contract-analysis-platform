@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from controllers.ApplicationUserController import auth_router
 from controllers.GenAIController import genai_router
 from controllers.ClientController import client_router
+from controllers.ContractController import contract_router
 
 settings = get_settings()
 
@@ -22,3 +23,4 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(auth_router)
 app.include_router(genai_router)
 app.include_router(client_router)
+app.include_router(contract_router)
