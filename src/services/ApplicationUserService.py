@@ -51,11 +51,4 @@ class ApplicationUserService:
             return application_user
         return None
 
-    def create_access_token(self, username: str, role: str, expires_delta: timedelta = None):
-        if expires_delta is None:
-            expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-
-        to_encode = {"sub": username, "role": role, "exp": datetime.now(timezone.utc) + expires_delta}
-        encode_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
-        return encode_jwt
     
