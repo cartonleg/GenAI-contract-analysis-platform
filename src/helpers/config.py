@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
 
+    OPENAI_API_KEY: str
+    GENERATION_MODEL: str
+
     class Config:
         env_file = Path(__file__).parent.parent.parent / ".env"
 
