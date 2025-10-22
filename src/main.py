@@ -3,6 +3,7 @@ from helpers.config import get_settings
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from controllers.ApplicationUserController import auth_router
+from controllers.GenAIController import genai_router
 
 settings = get_settings()
 
@@ -18,4 +19,4 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(auth_router)
-
+app.include_router(genai_router)
