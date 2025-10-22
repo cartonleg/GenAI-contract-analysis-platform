@@ -2,6 +2,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from enums.DataBaseEnum import DataBaseEnum
 from fastapi import UploadFile
 from bson import ObjectId, Binary
+from models.Contract import Contract
 
 class ContractService:
     def __init__(self, db_client: AsyncIOMotorClient): 
@@ -30,14 +31,14 @@ class ContractService:
         # convert the content to binary, but we have to read it first
         content = await content.read()
 
-        contract = {
-            "title": title,
-            "content": Binary(content),
-            "application_user_id": application_user_id,
-            "client_id": client_id
-        }
-        result = await self.collection.insert_one(contract)
-        contract["_id"] = result.inserted_id
+        contract = Contract(
+            title=title,
+            content=Binary(content),
+            application_user_id=application_user_id,
+            client_id=client_id
+        )
+        result = await self.collection.insert_one(contract.dict(exclude={"id"}))
+        contract._id = result.inserted_id
         return contract
 
     async def update_contract_record(self, contract_id, title: str = None, content: UploadFile = None, client_id: ObjectId = None):
