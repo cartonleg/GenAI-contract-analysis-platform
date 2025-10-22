@@ -9,6 +9,8 @@ class Contract(BaseModel):
     client_id: ObjectId
     application_user_id: ObjectId
     content: Binary
+    clauses: Optional[dict] = {"clauses": "Not analyzed yet"}
+    evaluation: Optional[dict] = {"approved": False, "reasoning": "pending analysis"}
 
     class Config:
         arbitrary_types_allowed = True
