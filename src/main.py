@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from controllers.ApplicationUserController import auth_router
 from controllers.GenAIController import genai_router
+from controllers.ClientController import client_router
 
 settings = get_settings()
 
@@ -20,3 +21,4 @@ app = FastAPI(lifespan=lifespan)
 
 app.include_router(auth_router)
 app.include_router(genai_router)
+app.include_router(client_router)
