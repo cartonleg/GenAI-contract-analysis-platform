@@ -39,7 +39,7 @@ async def login(request: Request, login_request: LoginRequest):
             content={"message": "Invalid username or password"}
         )
 
-    access_token = security_service.create_access_token(username=application_user.username, role=application_user.role)
+    access_token = security_service.create_access_token(id=application_user.id, username=application_user.username, role=application_user.role)
     return JSONResponse(
         status_code=200,
         content={"access_token": access_token, "token_type": "bearer"})
