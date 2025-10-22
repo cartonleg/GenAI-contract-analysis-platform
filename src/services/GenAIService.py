@@ -1,16 +1,19 @@
 import PyPDF2
 from helpers.config import get_settings
 from openai import OpenAI
-from fastapi import UploadFile
+from fastapi import UploadFile, Request, HTTPException
 from io import BytesIO
 import json
+from bson import Binary, ObjectId
+from enums.DataBaseEnum import DataBaseEnum
 
 settings = get_settings()
 
 
 class GenAIService:
-    def __init__(self):
-        self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
+    def __init__(self, request: Request):
+        self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        self.contract_collection = request.app.db_client[DataBaseEnum.CONTRACT_COLLECTION_NAME.value]
 
     async def analyze_pdf(self, file: UploadFile) -> dict:
         if file.content_type != "application/pdf":
@@ -20,7 +23,7 @@ class GenAIService:
 
         text = self.extract_text_from_pdf(content)
 
-        response = self.client.chat.completions.create(
+        response = self.openai_client.chat.completions.create(
             model=settings.GENERATION_MODEL,
             messages=[
                 {
@@ -53,7 +56,7 @@ class GenAIService:
             + json.dumps(clauses, ensure_ascii=False)
         )
 
-        response = self.client.chat.completions.create(
+        response = self.openai_client.chat.completions.create(
             model=settings.GENERATION_MODEL,
             messages=[
                 {
@@ -67,3 +70,45 @@ class GenAIService:
         result = json.loads(raw_result)
         
         return result
+    
+    async def analyze_pdf_in_bytes(self, file_content: bytes) -> dict:
+        text = self.extract_text_from_pdf(file_content)
+
+        response = self.openai_client.chat.completions.create(
+            model=settings.GENERATION_MODEL,
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"""Analyze this contract and extract all clauses. 
+                    Return only a JSON object where keys are clause names and values are their contents.
+                    Contract:\n{text}"""
+                }
+            ]
+        )
+
+        clauses = json.loads(response.choices[0].message.content)
+        return clauses
+
+    async def analyze_and_evaluate_pdf(self, binary_content: Binary, contract_id: ObjectId):
+
+        # Convert Binary to bytes
+        file_bytes = bytes(binary_content)
+
+        clauses = await self.analyze_pdf_in_bytes(file_bytes)
+        
+        clauses_redefined_for_evaluation = {"clauses": clauses}
+
+        if not clauses:
+            raise HTTPException(status_code=400, detail="No clauses extracted from the contract.")
+
+        evaluation = await self.evaluate_clauses(clauses_redefined_for_evaluation)
+
+        if not evaluation:
+            raise HTTPException(status_code=500, detail="Failed to evaluate the contract clauses.")
+
+        
+        await self.contract_collection.update_one(
+            {"_id": contract_id}, 
+            {"$set": {"clauses": clauses, "evaluation": evaluation}}
+        )
+        
