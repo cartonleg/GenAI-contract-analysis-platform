@@ -1,6 +1,7 @@
 from fastapi import APIRouter, UploadFile, Request, Depends
 from fastapi.responses import JSONResponse
 from services.ContractService import ContractService
+from services.GenAIService import GenAIService
 from services.ClientService import ClientService
 from bson import ObjectId
 from dependencies.auth import verify_jwt
@@ -82,3 +83,19 @@ async def delete_contract(contract_title: str, request: Request):
         return JSONResponse(status_code=404, content={"detail": "Contract not found"})
 
     return JSONResponse(status_code=200, content={"message": "Contract deleted successfully"})
+
+
+@contract_router.post("/{contract_title}/init-genai")
+async def init_genai_for_contract(request: Request,contract_title: str, user_data: dict = Depends(verify_jwt)):
+    genai_service = GenAIService(request=request)
+    contract_service = ContractService(db_client=request.app.db_client)
+
+    contract = await contract_service.get_contract_by_title(contract_title)
+
+    if not contract:
+        return JSONResponse(status_code=404, content={"message": "Contract not found"})
+
+    await genai_service.analyze_and_evaluate_pdf(binary_content=contract["content"], contract_id=contract["_id"])
+
+    return JSONResponse(status_code=200, content={"message": "GenAI analysis and evaluation completed successfully, recheck the contract record for clauses and evaluation, if they don't appear give it a while."})
+
