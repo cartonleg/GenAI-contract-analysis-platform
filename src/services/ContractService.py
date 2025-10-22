@@ -66,4 +66,11 @@ class ContractService:
     async def delete_contract_record(self, contract_title):
         result = await self.collection.delete_one({"title": contract_title})
         return result.deleted_count > 0
+
+    async def get_all_contracts_with_client_id(self, client_id: ObjectId):
+        contracts = []
+        cursor = self.collection.find({"client_id": client_id})
+        async for contract in cursor:
+            contracts.append(contract["title"])
+        return contracts
     
