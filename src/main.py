@@ -8,6 +8,7 @@ from controllers.ClientController import client_router
 from controllers.ContractController import contract_router
 from controllers.BackEndController import backend_router
 from middleware.RequestLoggingMiddleware import RequestLoggingMiddleware
+from redis.asyncio import Redis
 
 settings = get_settings()
 
@@ -15,10 +16,12 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     app.mongo_conn = AsyncIOMotorClient(settings.MONGODB_URL)
     app.db_client = app.mongo_conn[settings.MONGODB_DATABASE]
+    app.redis = await Redis.from_url(settings.REDIS_URL)
 
     yield
 
     app.mongo_conn.close()
+    await app.redis.close()
 
 app = FastAPI(lifespan=lifespan)
 
