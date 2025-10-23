@@ -17,7 +17,7 @@ Run the following command:
 ```bash
 cp .env.example .env
 ```
-This should change the name of the `.env.example` file to `.env`
+This should copy `.env.example` file to `.env`
 
 ### Step 3
 Edit values in `.env` to your liking (don't mess with the ones already filled for your own good, trust me I'm too lazy to explain why your db url might not work)
