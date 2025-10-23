@@ -9,3 +9,4 @@ argon2-cffi==25.1.0
 PyPDF2==3.0.1
 openai==2.6.0
 python-multipart==0.0.20
+redis==7.0.0
