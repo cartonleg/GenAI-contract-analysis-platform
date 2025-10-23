@@ -15,6 +15,9 @@ async def create_contract(request: Request, title: str, content: UploadFile, cli
     client_object = await client_service.get_client_by_name(client)
     client_id = client_object.id if client_object else None
 
+    if client_id is None:
+        return JSONResponse(status_code=404, content={"detail": "Client not found"})
+
     contract = await contract_service.create_contract_record(
         title=title,
         content=content,
@@ -23,9 +26,9 @@ async def create_contract(request: Request, title: str, content: UploadFile, cli
     )
 
     if not contract:
-        raise JSONResponse(status_code=400, content={"detail": "Contract with this title already exists"})
+        return JSONResponse(status_code=400, content={"detail": "Contract with this title already exists"})
 
-    return JSONResponse(status_code=201, content={"message": "Contract created successfully", "contract_id": str(contract["_id"])})
+    return JSONResponse(status_code=201, content={"message": "Contract created successfully", "contract_id": str(contract.id)})
 
 @contract_router.get("/{contract_title}")
 async def get_contract(contract_title: str, request: Request):
