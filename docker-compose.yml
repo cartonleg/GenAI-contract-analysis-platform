@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: genai-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  redis:
+    image: redis:latest
+    container_name: genai-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  fastapi:
+    build: .
+    container_name: genai-fastapi
+    ports:
+      - "5000:5000"
+    environment:
+      MONGODB_URL: mongodb://mongodb:27017/
+      MONGODB_DATABASE: genai-contract-analysis
+      REDIS_URL: redis://redis:6379/
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GENERATION_MODEL: ${GENERATION_MODEL}
+    depends_on:
+      - mongodb
+      - redis
+    volumes:
+      - .:/app
+
+volumes:
+  mongodb_data:
+  redis_data:
