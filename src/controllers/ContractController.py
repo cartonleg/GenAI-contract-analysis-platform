@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, Request, Depends
+from fastapi import APIRouter, UploadFile, Request, Depends, BackgroundTasks
 from fastapi.responses import JSONResponse
 from services.ContractService import ContractService
 from services.GenAIService import GenAIService
@@ -89,8 +89,7 @@ async def delete_contract(contract_title: str, request: Request):
 
 
 @contract_router.post("/{contract_title}/init-genai")
-async def init_genai_for_contract(request: Request,contract_title: str, user_data: dict = Depends(verify_jwt)):
-    genai_service = GenAIService(request=request)
+async def init_genai_for_contract(request: Request, background_tasks: BackgroundTasks, contract_title: str, user_data: dict = Depends(verify_jwt)):
     contract_service = ContractService(db_client=request.app.db_client)
 
     contract = await contract_service.get_contract_by_title(contract_title)
@@ -98,7 +97,25 @@ async def init_genai_for_contract(request: Request,contract_title: str, user_dat
     if not contract:
         return JSONResponse(status_code=404, content={"message": "Contract not found"})
 
-    await genai_service.analyze_and_evaluate_pdf(binary_content=contract["content"], contract_id=contract["_id"])
+    background_tasks.add_task(
+        run_genai_analysis,
+        request=request,
+        contract=contract
+    )
 
-    return JSONResponse(status_code=200, content={"message": "GenAI analysis and evaluation completed successfully, recheck the contract record for clauses and evaluation, if they don't appear give it a while."})
+    return JSONResponse(
+        status_code=202,
+        content={"message": "GenAI analysis started in background. Check back in a few seconds."}
+    )
 
+async def run_genai_analysis(request: Request, contract: dict):
+    """Background task to analyze and evaluate contract"""
+    try:
+        genai_service = GenAIService(request=request)
+        result = await genai_service.analyze_and_evaluate_pdf(
+            binary_content=contract["content"],
+            contract_id=contract["_id"]
+        )
+        print(f"Analysis completed for contract {contract['_id']}")
+    except Exception as e:
+        print(f"Error in background task: {str(e)}")
