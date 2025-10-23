@@ -31,7 +31,7 @@ async def create_contract(request: Request, title: str, content: UploadFile, cli
     return JSONResponse(status_code=201, content={"message": "Contract created successfully", "contract_id": str(contract.id)})
 
 @contract_router.get("/{contract_title}")
-async def get_contract(contract_title: str, request: Request):
+async def get_contract(contract_title: str, request: Request, user_data: dict = Depends(verify_jwt)):
     contract_service = ContractService(db_client=request.app.db_client)
     contract = await contract_service.get_contract_by_title(contract_title)
 
@@ -46,7 +46,7 @@ async def get_contract(contract_title: str, request: Request):
     return JSONResponse(status_code=200, content=contract)
 
 @contract_router.put("/{contract_title}")
-async def update_contract(contract_title: str, request: Request, title: str = None, content: UploadFile = None, client: str = None):
+async def update_contract(contract_title: str, request: Request, title: str = None, content: UploadFile = None, client: str = None, user_data: dict = Depends(verify_jwt)):
     contract_service = ContractService(db_client=request.app.db_client)
     client_service = ClientService(db_client=request.app.db_client)
 
@@ -78,7 +78,7 @@ async def update_contract(contract_title: str, request: Request, title: str = No
     return JSONResponse(status_code=200, content=updated_contract)
 
 @contract_router.delete("/{contract_title}")
-async def delete_contract(contract_title: str, request: Request):
+async def delete_contract(contract_title: str, request: Request, user_data: dict = Depends(verify_jwt)):
     contract_service = ContractService(db_client=request.app.db_client)
     success = await contract_service.delete_contract_record(contract_title)
 
