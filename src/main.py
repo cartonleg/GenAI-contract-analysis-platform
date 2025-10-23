@@ -6,6 +6,8 @@ from controllers.ApplicationUserController import auth_router
 from controllers.GenAIController import genai_router
 from controllers.ClientController import client_router
 from controllers.ContractController import contract_router
+from controllers.BackEndController import backend_router
+from middleware.RequestLoggingMiddleware import RequestLoggingMiddleware
 
 settings = get_settings()
 
@@ -20,7 +22,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+app.add_middleware(RequestLoggingMiddleware)
+
 app.include_router(auth_router)
 app.include_router(genai_router)
 app.include_router(client_router)
 app.include_router(contract_router)
+app.include_router(backend_router)
