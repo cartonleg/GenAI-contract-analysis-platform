@@ -22,7 +22,7 @@ async def get_contracts_by_client_name(client_name: str, request: Request, user_
     client_service = ClientService(db_client=request.app.db_client)
     contract_service = ContractService(db_client=request.app.db_client)
 
-    client = await client_service.get_client_by_name(client_name)
+    client = await client_service.get_client_by_name_and_application_user_id(client_name, user_data["id"])
     if not client:
         return JSONResponse(status_code=404, content={"error": "Client not found"})
 

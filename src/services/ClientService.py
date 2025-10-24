@@ -12,14 +12,15 @@ class ClientService:
         """This method is to make sure that the client name is unique by creating an index on it."""
         await self.collection.create_index("name", unique=True)
 
-    async def get_client_by_name(self, name: str):
-        client = await self.collection.find_one({"name": name})
+    async def get_client_by_name_and_application_user_id(self, name: str, application_user_id: str):
+
+        client = await self.collection.find_one({"name": name, "application_user_id": ObjectId(application_user_id)})
         if client:
             return Client(**client)
         return None
 
     async def create_client_record(self, record_name: str, application_user_id: ObjectId):
-        if await self.get_client_by_name(record_name):
+        if await self.get_client_by_name_and_application_user_id(record_name, application_user_id):
             return None
 
         client = Client(name=record_name, application_user_id=application_user_id)
