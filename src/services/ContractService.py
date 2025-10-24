@@ -12,8 +12,8 @@ class ContractService:
         """This method is to make sure that the contract title is unique by creating an index on it."""
         await self.collection.create_index("title", unique=True)
 
-    async def get_contract_by_title(self, title: str):
-        contract = await self.collection.find_one({"title": title})
+    async def get_contract_by_title_and_application_user_id(self, title: str, application_user_id: ObjectId = None):
+        contract = await self.collection.find_one({"title": title, "application_user_id": application_user_id})
         if contract:
             return contract
         return None
@@ -25,7 +25,7 @@ class ContractService:
         return None
 
     async def create_contract_record(self, title: str, content: UploadFile, application_user_id: ObjectId, client_id: ObjectId = None):
-        if await self.get_contract_by_title(title):
+        if await self.get_contract_by_title(title, application_user_id):
             return None
         
         # convert the content to binary, but we have to read it first
@@ -41,7 +41,7 @@ class ContractService:
         contract._id = result.inserted_id
         return contract
 
-    async def update_contract_record(self, contract_id, title: str = None, content: UploadFile = None, client_id: ObjectId = None):
+    async def update_contract_record(self, contract_id, title: str = None, content: UploadFile = None, client_id: ObjectId = None, application_user_id: ObjectId = None):
         update_data = {}
         if title:
             update_data["title"] = title
@@ -55,7 +55,7 @@ class ContractService:
             return None  # Nothing to update
 
         result = await self.collection.update_one(
-            {"_id": contract_id},
+            {"_id": contract_id, "application_user_id": application_user_id},
             {"$set": update_data}
         )
 
@@ -64,8 +64,8 @@ class ContractService:
 
         return await self.get_contract_by_id(contract_id)
 
-    async def delete_contract_record(self, contract_title):
-        result = await self.collection.delete_one({"title": contract_title})
+    async def delete_contract_record(self, contract_title: str, application_user_id: ObjectId):
+        result = await self.collection.delete_one({"title": contract_title, "application_user_id": application_user_id})
         return result.deleted_count > 0
 
     async def get_all_contracts_with_client_id(self, client_id: ObjectId):

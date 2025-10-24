@@ -12,7 +12,7 @@ contract_router = APIRouter(prefix="/contracts")
 async def create_contract(request: Request, title: str, content: UploadFile, client: str, user_data: dict = Depends(verify_jwt)):
     contract_service = ContractService(db_client=request.app.db_client)
     client_service = ClientService(db_client=request.app.db_client)
-    client_object = await client_service.get_client_by_name(client)
+    client_object = await client_service.get_client_by_name_and_application_user_id(client, str(user_data["id"]))
     client_id = client_object.id if client_object else None
 
     if client_id is None:
@@ -33,7 +33,7 @@ async def create_contract(request: Request, title: str, content: UploadFile, cli
 @contract_router.get("/{contract_title}")
 async def get_contract(contract_title: str, request: Request, user_data: dict = Depends(verify_jwt)):
     contract_service = ContractService(db_client=request.app.db_client)
-    contract = await contract_service.get_contract_by_title(contract_title)
+    contract = await contract_service.get_contract_by_title_and_application_user_id(contract_title, ObjectId(user_data["id"]))
 
     if not contract:
         return JSONResponse(status_code=404, content={"detail": "Contract not found"})
@@ -50,21 +50,22 @@ async def update_contract(contract_title: str, request: Request, title: str = No
     contract_service = ContractService(db_client=request.app.db_client)
     client_service = ClientService(db_client=request.app.db_client)
 
-    contract = await contract_service.get_contract_by_title(contract_title)
+    contract = await contract_service.get_contract_by_title_and_application_user_id(contract_title, ObjectId(user_data["id"]))
     if not contract:
         return JSONResponse(status_code=404, content={"detail": "Contract not found"})
     contract_id = contract["_id"]
 
     client_id = None
     if client:
-        client_obj = await client_service.get_client_by_name(client)
+        client_obj = await client_service.get_client_by_name_and_application_user_id(client, user_data["id"])
         client_id = client_obj.id if client_obj else None
 
     updated_contract = await contract_service.update_contract_record(
         ObjectId(contract_id),
         title=title,
         content=content,
-        client_id=ObjectId(client_id) if client_id else None
+        client_id=ObjectId(client_id) if client_id else None,
+        application_user_id=ObjectId(user_data["id"])
     )
 
     if not updated_contract:
@@ -80,7 +81,7 @@ async def update_contract(contract_title: str, request: Request, title: str = No
 @contract_router.delete("/{contract_title}")
 async def delete_contract(contract_title: str, request: Request, user_data: dict = Depends(verify_jwt)):
     contract_service = ContractService(db_client=request.app.db_client)
-    success = await contract_service.delete_contract_record(contract_title)
+    success = await contract_service.delete_contract_record(contract_title, ObjectId(user_data["id"]))
 
     if not success:
         return JSONResponse(status_code=404, content={"detail": "Contract not found"})
@@ -92,7 +93,7 @@ async def delete_contract(contract_title: str, request: Request, user_data: dict
 async def init_genai_for_contract(request: Request, background_tasks: BackgroundTasks, contract_title: str, user_data: dict = Depends(verify_jwt)):
     contract_service = ContractService(db_client=request.app.db_client)
 
-    contract = await contract_service.get_contract_by_title(contract_title)
+    contract = await contract_service.get_contract_by_title_and_application_user_id(contract_title, ObjectId(user_data["id"]))
 
     if not contract:
         return JSONResponse(status_code=404, content={"message": "Contract not found"})
